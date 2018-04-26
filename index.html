@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
+          integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css"
+          integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous">
+
+    <style>
+        #profilePicCol {
+            max-width: 240px;
+        }
+        #infoCol {
+            min-width: 350px;
+        }
+        #searchBtn {
+            width: 100px;
+        }
+    </style>
+
+    <title>GitHub Mini App</title>
+</head>
+<body>
+
+<main class="container mt-2">
+    <label for="usernameField">Search Username</label>
+    <form id="searchForm" class="form-inline mb-2" onsubmit="return onClickSearch();">
+        <div class="form-group mb-2 mr-3">
+            <input type="text" size="38" required class="form-control" id="usernameField"
+                   pattern="^[A-Za-z\d](?:[A-Za-z\d]|-(?=[A-Za-z\d])){0,38}$"
+                   placeholder="GitHub username">
+        </div>
+        <button id="searchBtn" type="submit" class="btn btn-primary mb-2">Search</button>
+    </form>
+
+    <!-- error alert goes here -->
+
+    <div class="mt-4" id="userInfo" style="display: none">
+        <h3 class="mb-3">Result</h3>
+        <div class="row">
+            <div id="profilePicCol" class="col mb-2">
+                <img id="userProfilePic" width="200" height="200" src="https://placeimg.com/350/350/any" alt="name">
+            </div>
+            <div id="infoCol" class="col">
+                <h4 id="userDisplayName">name</h4>
+                <p id="userLogin" class="text-secondary">@login</p>
+                <p id="userBio">Build responsive, mobile-first projects on the web with the world's most popular front-end component library.
+                    Bootstrap is an open source toolkit for developing with HTML, CSS, and JS.
+                    Quickly prototype your ideas or build your entire app with our Sass variables and mixins, responsive grid system,
+                    extensive prebuilt components, and powerful plugins built on jQuery.</p>
+                <p id="userEmail">
+                    <i class="far fa-envelope fa-fw mr-1"></i>
+                    email@domain.com
+                </p>
+                <p id="userCompany">
+                    <i class="far fa-building fa-fw mr-1"></i>
+                    Company name
+                </p>
+                <p id="userLocation">
+                    <i class="fas fa-map-marker-alt fa-fw mr-1"></i>
+                    Melbourne VIC, Australia
+                </p>
+                <a id="userProfileLink" href="#" target="_blank" class="btn btn-primary">View on GitHub</a>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
+        integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT"
+        crossorigin="anonymous">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"
+        integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+        crossorigin="anonymous">
+</script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"
+        integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
+        crossorigin="anonymous">
+</script>
+
+<script>
+    /*
+{
+    "login": "z",
+    "avatar_url": "https://avatars1.githubusercontent.com/u/49380?v=4",
+    "html_url": "https://github.com/z",
+    "name": "Tyler \"-z-\" Mulligan",
+    "company": null,
+    "location": "everywhere",
+    "email": null,
+    "bio": "tools, workflows, services, game-related development, reproducible environments",
+    "public_repos": 53,
+    "public_gists": 3,
+    "followers": 45,
+    "following": 64,
+    "created_at": "2009-01-26T16:43:02Z",
+    "updated_at": "2018-04-13T23:00:03Z"
+}
+     */
+
+    function onClickSearch() {
+        let username = $('#usernameField').val();
+        let url = 'https://api.github.com/users/' + username;
+        console.log(url);
+
+        let searchBtn = $('#searchBtn');
+        searchBtn.text('Searching');
+        searchBtn.attr('disabled', '');
+
+        let userInfoElement = $('#userInfo');
+        userInfoElement.css('display', 'none');
+
+        clearErrorAlert();
+
+        $.ajax({
+            url: url
+        }).done(function(data) {
+            console.log(data);
+            populateUserData(data);
+            userInfoElement.css('display', '');
+
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.log(jqXHR);
+            if (jqXHR.status === 404) {
+                showErrorAlert("User not found");
+            }
+            else {
+                showErrorAlert("Unexpected error occurred");
+            }
+
+        }).always(function () {
+            searchBtn.removeAttr('disabled');
+            searchBtn.text('Search');
+        });
+
+        return false;
+    }
+
+    function populateUserData(data) {
+        $('#userDisplayName').text(data.name? data.name : data.login);
+        $('#userLogin').text('@' + data.login);
+        $('#userProfilePic').attr('src', data.avatar_url);
+        $('#userBio').text(data.bio);
+        $('#userEmail').html(data.email? '<i class="far fa-envelope fa-fw mr-1"></i>' + data.email : null);
+        $('#userCompany').html(data.company? '<i class="far fa-building fa-fw mr-1"></i>' + data.company : null);
+        $('#userLocation').html(data.location? '<i class="fas fa-map-marker-alt fa-fw mr-1"></i>' + data.location : null);
+        $('#userProfileLink').attr('href', data.html_url);
+    }
+
+    function clearErrorAlert() {
+        $('#errorAlert').remove();
+    }
+
+    function showErrorAlert(msg) {
+        clearErrorAlert();
+
+        let alertHtml = `
+            <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert">
+                ${msg}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        `;
+
+        $('#searchForm').after(alertHtml);
+    }
+
+</script>
+
+</body>
+</html>
